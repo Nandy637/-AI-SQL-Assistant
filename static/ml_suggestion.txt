@@ -1,0 +1,5 @@
+1. 🎯 Target: avg_salary
+   🛠️ Features: ['emp_name']
+   🧠 Type: regression
+   📋 Reason: Predict salary based on employee name
+

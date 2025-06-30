@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>AI SQL Assistant</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+    }
+    textarea, pre {
+      width: 100%;
+      min-height: 200px;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .loading {
+      color: darkorange;
+    }
+    .done {
+      color: green;
+    }
+    .error {
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>🧠 AI SQL Assistant</h1>
+
+  <form method="post">
+    <label>Host: <input type="text" name="host" required></label><br><br>
+    <label>Database: <input type="text" name="db" required></label><br><br>
+    <label>User: <input type="text" name="user" required></label><br><br>
+    <label>Password: <input type="password" name="password" required></label><br><br>
+    <label>Question: <input type="text" name="question" required></label><br><br>
+    <button type="submit">Run</button>
+  </form>
+
+  {% if error %}
+    <p class="error">❌ {{ error }}</p>
+  {% endif %}
+
+  {% if processing %}
+    <p class="loading">⏳ Processing... (Please wait)</p>
+  {% endif %}
+
+  <h2>📄 Output</h2>
+  <pre id="output">Waiting for results...</pre>
+
+  <script>
+    {% if processing %}
+    function pollOutput() {
+      fetch("/get_output")
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById("output").textContent = data.output;
+
+          if (!data.processing) {
+            document.querySelector(".loading").textContent = "✅ Done!";
+            clearInterval(poller);
+          }
+        });
+    }
+
+    const poller = setInterval(pollOutput, 3000);
+    {% endif %}
+  </script>
+</body>
+</html>
+
+
+
+
+
+
+
+
+
