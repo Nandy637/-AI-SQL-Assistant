@@ -47,7 +47,17 @@ sys.stdout = open(LOG_FILE, "a", encoding="utf-8")
 sys.stderr = sys.stdout
 
 # Groq API client
-client = Groq(api_key="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")
+from dotenv import load_dotenv
+load_dotenv()  # Load variables from .env
+
+# Get the API key securely from environment
+api_key = os.getenv("GROQ_API_KEY")
+
+if not api_key:
+    log_print("❌ GROQ_API_KEY not found in environment variables.")
+    sys.exit(1)
+
+client = Groq(api_key=api_key)
 
 # Ensure model save directory
 os.makedirs("models", exist_ok=True)
@@ -149,6 +159,8 @@ def train_and_save_model(df, target, features, model_type=None):
         log_print(f"❌ Error during model training or saving: {e}")
 
 # Chart rendering function
+# [Previous imports and setup remain the same until chart rendering function]
+
 def render_chart(code, df, chart_idx):
     """
     Executes Python code to render a chart and saves it to a file.
@@ -157,6 +169,10 @@ def render_chart(code, df, chart_idx):
     local_env = {"df": df, "pd": pd, "sns": sns, "plt": plt, "px": px}
     try:
         start = time.time()
+        
+        # Remove fig.show() calls to prevent console output
+        code = code.replace("fig.show()", "")
+        
         exec(code, local_env)
         end = time.time()
         duration = round(end - start, 2)
@@ -168,19 +184,26 @@ def render_chart(code, df, chart_idx):
             filename = f"static/chart_{chart_idx}_{timestamp}.png"
             plt.savefig(filename)
             log_print(f"🖼️ Chart #{chart_idx} saved to {filename}")
-            plt.clf() # Clear the current figure to prevent overlap
+            plt.clf()
+            return filename
 
         # Save Plotly charts
-        if "fig.show()" in code:
-            fig = local_env.get("fig")
-            if fig is not None:
-                fig.write_html(PLOT_OUTPUT_FILE)
-                log_print(f"🌐 Chart #{chart_idx} saved to {PLOT_OUTPUT_FILE} (open in browser)")
-            else:
-                log_print(f"⚠️ Plotly figure 'fig' not found in chart code #{chart_idx}.")
+        fig = local_env.get("fig")
+        if fig is not None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"static/chart_{chart_idx}_{timestamp}.html"
+            # Use full_html=False to minimize the HTML output
+            fig.write_html(filename, include_plotlyjs='cdn', full_html=False)
+            log_print(f"🌐 Chart #{chart_idx} saved to {filename}")
+            return filename
+        else:
+            log_print(f"⚠️ No figure found in chart code #{chart_idx}.")
+            return None
+            
     except Exception as e:
         log_print(f"❌ Error rendering chart #{chart_idx}: {e}")
-
+        return None
+# [Rest of the file remains the same]
 # Main execution flow
 if __name__ == "__main__":
     if len(sys.argv) < 6:
@@ -273,10 +296,16 @@ Only return the SQL code. Do not include any explanation or markdown outside the
 You are a data visualization expert.
 Given this DataFrame (first 5 rows for schema reference):
 {df.head().to_string(index=False)}
+
 Suggest up to 3 different chart ideas using seaborn or plotly.
 Each chart should have its own complete Python code block.
 Assume 'df' is already defined.
-Ensure the code includes plt.show() for seaborn/matplotlib or fig.show() for plotly.
+
+IMPORTANT:
+1. DO NOT include fig.show() or plt.show() in the code
+2. For Plotly charts, assign the figure to a variable named 'fig'
+3. For Matplotlib/Seaborn charts, use plt but don't call show()
+
 Only return Python code blocks. Do not include any explanation or markdown outside the code blocks.
 """
             viz_response = client.chat.completions.create(

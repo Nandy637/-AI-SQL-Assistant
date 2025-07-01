@@ -25,5 +25,13 @@
     ],
     "type": "regression",
     "trained_on": "2025-06-30T15:51:37.802020"
+  },
+  "avg_present_days": {
+    "model_file": "models\\avg_present_days_model.pkl",
+    "features": [
+      "emp_id"
+    ],
+    "type": "regression",
+    "trained_on": "2025-07-01T09:53:11.531587"
   }
 }

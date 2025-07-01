@@ -5,23 +5,163 @@
   <title>AI SQL Assistant</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      margin: 2rem;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+      background-color: #f9f9f9;
+      color: #333;
+      line-height: 1.6;
     }
-    textarea, pre {
+    h1 {
+      color: #2c3e50;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    pre {
       width: 100%;
       min-height: 200px;
-      font-family: monospace;
+      font-family: 'Consolas', 'Monaco', monospace;
       white-space: pre-wrap;
+      background: #f8f8f8;
+      padding: 1rem;
+      border-radius: 4px;
+      border: 1px solid #e1e1e1;
+      overflow-x: auto;
+    }
+    .status {
+      padding: 0.8rem;
+      border-radius: 4px;
+      margin: 1rem 0;
+      font-weight: bold;
     }
     .loading {
-      color: darkorange;
+      background-color: #fff8e1;
+      color: #ff8f00;
+      border-left: 4px solid #ffc107;
     }
     .done {
-      color: green;
+      background-color: #e8f5e9;
+      color: #2e7d32;
+      border-left: 4px solid #4caf50;
     }
     .error {
-      color: red;
+      background-color: #ffebee;
+      color: #c62828;
+      border-left: 4px solid #f44336;
+    }
+    form {
+      background: #ffffff;
+      padding: 2rem;
+      border-radius: 8px;
+      margin-bottom: 2rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    }
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #424242;
+    }
+    input[type="text"],
+    input[type="password"] {
+      width: 100%;
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 1rem;
+      transition: border 0.3s;
+    }
+    input[type="text"]:focus,
+    input[type="password"]:focus {
+      border-color: #4CAF50;
+      outline: none;
+      box-shadow: 0 0 0 2px rgba(76, 175, 80, 0.2);
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      padding: 0.9rem 1.8rem;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 1rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: background 0.3s, transform 0.2s;
+    }
+    button:hover {
+      background: #3d8b40;
+      transform: translateY(-1px);
+    }
+    button:active {
+      transform: translateY(0);
+    }
+    .chart-container {
+      margin: 2rem 0;
+      border: 1px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 1.5rem;
+      background: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .chart-container h3 {
+      margin: 0 0 1rem 0;
+      color: #2c3e50;
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+    }
+    .chart-container h3::before {
+      content: "📊";
+      margin-right: 0.5rem;
+    }
+    .chart-iframe {
+      width: 100%;
+      height: 500px;
+      border: none;
+      margin-top: 1rem;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .chart-img {
+      max-width: 100%;
+      display: block;
+      margin: 1rem auto;
+      border-radius: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    .section-title {
+      color: #2c3e50;
+      border-bottom: 2px solid #eee;
+      padding-bottom: 0.5rem;
+      margin-top: 2rem;
+      font-size: 1.5rem;
+    }
+    #no-charts-message {
+      text-align: center;
+      color: #757575;
+      padding: 2rem;
+      background: #f5f5f5;
+      border-radius: 8px;
+    }
+    .chart-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+    .chart-nav button {
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      background: #f5f5f5;
+      color: #333;
+      border: 1px solid #ddd;
+    }
+    .chart-nav button:hover {
+      background: #e0e0e0;
     }
   </style>
 </head>
@@ -29,51 +169,189 @@
   <h1>🧠 AI SQL Assistant</h1>
 
   <form method="post">
-    <label>Host: <input type="text" name="host" required></label><br><br>
-    <label>Database: <input type="text" name="db" required></label><br><br>
-    <label>User: <input type="text" name="user" required></label><br><br>
-    <label>Password: <input type="password" name="password" required></label><br><br>
-    <label>Question: <input type="text" name="question" required></label><br><br>
-    <button type="submit">Run</button>
+    <label>Database Host: <input type="text" name="host" required placeholder="e.g., localhost or 127.0.0.1"></label>
+    <label>Database Name: <input type="text" name="db" required placeholder="e.g., northwind or sales_db"></label>
+    <label>Username: <input type="text" name="user" required placeholder="e.g., admin or root"></label>
+    <label>Password: <input type="password" name="password" required placeholder="Your database password"></label>
+    <label>Your Question: <input type="text" name="question" required placeholder="e.g., Show monthly sales by product category"></label>
+    <button type="submit">Run Analysis</button>
   </form>
 
   {% if error %}
-    <p class="error">❌ {{ error }}</p>
+    <div class="status error">❌ {{ error }}</div>
   {% endif %}
 
   {% if processing %}
-    <p class="loading">⏳ Processing... (Please wait)</p>
+    <div class="status loading">
+      ⏳ Processing your request... 
+      <div style="font-weight: normal; margin-top: 0.5rem;">
+        This may take a moment depending on the complexity of your query.
+      </div>
+    </div>
   {% endif %}
 
-  <h2>📄 Output</h2>
-  <pre id="output">Waiting for results...</pre>
+  <h2 class="section-title">📄 Analysis Log</h2>
+  <pre id="output">Waiting for results to appear here...</pre>
+
+  <div id="results-section">
+    <h2 class="section-title">📊 Visualization Results</h2>
+    <div id="charts-container">
+      <p id="no-charts-message">Generated charts will appear here once the analysis is complete</p>
+    </div>
+  </div>
 
   <script>
     {% if processing %}
+    // Enhanced polling with error handling
+    let retryCount = 0;
+    const maxRetries = 10;
+    const retryDelay = 2000;
+    
     function pollOutput() {
       fetch("/get_output")
-        .then(res => res.json())
+        .then(res => {
+          if (!res.ok) throw new Error('Network response was not ok');
+          return res.json();
+        })
         .then(data => {
+          retryCount = 0; // Reset retry count on success
           document.getElementById("output").textContent = data.output;
 
           if (!data.processing) {
-            document.querySelector(".loading").textContent = "✅ Done!";
+            document.querySelector(".loading").classList.remove("loading");
+            document.querySelector(".loading").classList.add("done");
+            document.querySelector(".loading").innerHTML = `
+              ✅ Analysis Complete!
+              <div style="font-weight: normal; margin-top: 0.5rem;">
+                Scroll down to view the results and visualizations.
+              </div>
+            `;
+            clearInterval(poller);
+            loadCharts();
+          }
+        })
+        .catch(error => {
+          console.error('Polling error:', error);
+          if (retryCount < maxRetries) {
+            retryCount++;
+            setTimeout(pollOutput, retryDelay);
+          } else {
+            document.querySelector(".loading").classList.add("error");
+            document.querySelector(".loading").textContent = 
+              "❌ Failed to get updates after several attempts. Please refresh the page.";
             clearInterval(poller);
           }
         });
     }
 
-    const poller = setInterval(pollOutput, 3000);
+    // Improved chart loading with error handling
+    function loadCharts() {
+      fetch('/get_charts')
+        .then(response => {
+          if (!response.ok) throw new Error('Chart list not available');
+          return response.json();
+        })
+        .then(data => {
+          const container = document.getElementById('charts-container');
+          const noChartsMsg = document.getElementById('no-charts-message');
+          
+          if (data.charts.length === 0) {
+            noChartsMsg.textContent = "No visualizations were generated for this analysis.";
+            return;
+          }
+          
+          container.innerHTML = ''; // Clear previous content
+          
+          data.charts.forEach((chartFile, index) => {
+            const chartDiv = document.createElement('div');
+            chartDiv.className = 'chart-container';
+            
+            const chartTitle = document.createElement('h3');
+            chartTitle.textContent = `Visualization ${index + 1}`;
+            
+            const chartContent = document.createElement('div');
+            
+            if (chartFile.endsWith('.html')) {
+              // For Plotly charts
+              const iframe = document.createElement('iframe');
+              iframe.className = 'chart-iframe';
+              iframe.sandbox = "allow-scripts allow-same-origin";
+              iframe.src = `/static/${chartFile}`;
+              
+              // Add loading indicator
+              iframe.onload = () => {
+                iframe.style.backgroundColor = 'transparent';
+              };
+              iframe.style.backgroundColor = '#f5f5f5';
+              
+              chartContent.appendChild(iframe);
+            } else {
+              // For static images
+              const img = document.createElement('img');
+              img.className = 'chart-img';
+              img.src = `/static/${chartFile}`;
+              img.alt = `Generated chart ${index + 1}`;
+              img.onerror = () => {
+                img.alt = 'Failed to load chart image';
+                img.style.opacity = '0.5';
+              };
+              
+              chartContent.appendChild(img);
+            }
+            
+            // Add navigation controls for multiple charts
+            if (data.charts.length > 1) {
+              const navDiv = document.createElement('div');
+              navDiv.className = 'chart-nav';
+              
+              if (index > 0) {
+                const prevBtn = document.createElement('button');
+                prevBtn.textContent = '◄ Previous';
+                prevBtn.onclick = () => {
+                  document.querySelectorAll('.chart-container')[index-1].scrollIntoView({
+                    behavior: 'smooth'
+                  });
+                };
+                navDiv.appendChild(prevBtn);
+              }
+              
+              if (index < data.charts.length - 1) {
+                const nextBtn = document.createElement('button');
+                nextBtn.textContent = 'Next ►';
+                nextBtn.onclick = () => {
+                  document.querySelectorAll('.chart-container')[index+1].scrollIntoView({
+                    behavior: 'smooth'
+                  });
+                };
+                navDiv.appendChild(nextBtn);
+              }
+              
+              chartContent.appendChild(navDiv);
+            }
+            
+            chartDiv.appendChild(chartTitle);
+            chartDiv.appendChild(chartContent);
+            container.appendChild(chartDiv);
+          });
+        })
+        .catch(error => {
+          console.error('Error loading charts:', error);
+          document.getElementById('no-charts-message').textContent = 
+            "Error loading visualizations. Please try again or check the console for details.";
+        });
+    }
+
+    // Start polling immediately and then every 2 seconds
+    pollOutput();
+    const poller = setInterval(pollOutput, 2000);
+    
+    // Scroll to bottom when new output arrives
+    const outputElement = document.getElementById('output');
+    const observer = new MutationObserver(() => {
+      outputElement.scrollTop = outputElement.scrollHeight;
+    });
+    observer.observe(outputElement, { childList: true });
     {% endif %}
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-

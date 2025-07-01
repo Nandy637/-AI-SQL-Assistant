@@ -1,5 +1,5 @@
-1. 🎯 Target: avg_salary
-   🛠️ Features: ['emp_name']
+1. 🎯 Target: avg_present_days
+   🛠️ Features: ['emp_id']
    🧠 Type: regression
-   📋 Reason: Predict salary based on employee name
+   📋 Reason: Predicting average present days based on employee ID
 
