@@ -1,0 +1,13 @@
+Flask
+python-dotenv
+requests
+numpy
+pandas
+matplotlib
+seaborn
+plotly
+sqlalchemy
+mysql-connector-python
+groq
+scikit-learn
+joblib

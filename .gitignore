@@ -1,6 +1,6 @@
-.env 
-*.pkl 
-__pycache__/ 
-*.png 
-*.html 
-models/ 
+.env
+*.pyc
+__pycache__/
+models/
+static/*.png
+static/*.html
