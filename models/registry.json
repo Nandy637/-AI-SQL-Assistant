@@ -19,12 +19,12 @@
   "salary": {
     "model_file": "models\\salary_model.pkl",
     "features": [
-      "emp_name",
+      "emp_id",
       "month",
       "year"
     ],
     "type": "regression",
-    "trained_on": "2025-06-30T15:51:37.802020"
+    "trained_on": "2025-07-01T12:26:38.936838"
   },
   "avg_present_days": {
     "model_file": "models\\avg_present_days_model.pkl",
@@ -33,5 +33,13 @@
     ],
     "type": "regression",
     "trained_on": "2025-07-01T09:53:11.531587"
+  },
+  "emp_name": {
+    "model_file": "models\\emp_name_model.pkl",
+    "features": [
+      "emp_id"
+    ],
+    "type": "classification",
+    "trained_on": "2025-07-01T11:57:20.900629"
   }
 }

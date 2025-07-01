@@ -16,6 +16,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.ensemble import RandomForestClassifier, RandomForestRegressor
 from sklearn.metrics import accuracy_score, mean_squared_error
 import joblib
+sys.stdout.reconfigure(encoding='utf-8')
+
 
 # Define output files
 LOG_FILE = "static/output.txt"
@@ -42,9 +44,7 @@ def log_print(*args, **kwargs):
         print(*args, file=f, **kwargs)
     print(*args, **kwargs)  # Also print to console
 
-# Redirect stdout and stderr to log file
-sys.stdout = open(LOG_FILE, "a", encoding="utf-8")
-sys.stderr = sys.stdout
+
 
 # Groq API client
 from dotenv import load_dotenv
