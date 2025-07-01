@@ -102,22 +102,15 @@
 
 🧠 Generated SQL Query:
 
-SELECT 
-  e.emp_id, 
-  AVG(p.present_days) AS avg_present_days
-FROM 
-  employee_tbl e 
-  JOIN payroll_data p ON e.emp_id = p.emp_id 
-GROUP BY 
-  e.emp_id;
+SELECT emp_name FROM employee_tbl;
 
 📊 Query Result (first 5 rows):
- emp_id  avg_present_days
-   1001             24.75
-   1002             24.75
-   1003             24.25
-   1004             24.00
-   1005             26.00
+emp_name
+    Alan
+    Bina
+   Casey
+   Dolly
+  Edison
 
 💾 Query results saved to static/query_output.html
 
@@ -130,63 +123,59 @@ GROUP BY
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(10,6))
-sns.histplot(df['avg_present_days'], kde=True, bins=20)
-plt.title('Distribution of Average Present Days')
-plt.xlabel('Average Present Days')
-plt.ylabel('Frequency')
+plt.figure(figsize=(8,6))
+sns.countplot(x="emp_name", data=df)
+plt.title("Employee Count")
+plt.xlabel("Employee Name")
+plt.ylabel("Count")
 plt.show()
 
 🔍 Rendering Chart #1...
-⏱️ Chart #1 rendered in 13.44 seconds
-🖼️ Chart #1 saved to static/chart_1_20250701_095301.png
+⏱️ Chart #1 rendered in 2.75 seconds
+🖼️ Chart #1 saved to static/chart_1_20250701_104131.png
 
 🔢 Chart #2 Code:
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-plt.figure(figsize=(10,6))
-sns.boxplot(y='avg_present_days', data=df)
-plt.title('Boxplot of Average Present Days')
-plt.ylabel('Average Present Days')
-plt.show()
-
-🔍 Rendering Chart #2...
-⏱️ Chart #2 rendered in 6.5 seconds
-🖼️ Chart #2 saved to static/chart_2_20250701_095308.png
-
-🔢 Chart #3 Code:
 import plotly.express as px
 
-fig = px.bar(df, x='emp_id', y='avg_present_days')
-fig.update_layout(title='Average Present Days by Employee',
-                  xaxis_title='Employee ID',
-                  yaxis_title='Average Present Days')
+fig = px.pie(names=df['emp_name'], values=[1]*len(df))
+fig.update_layout(title_text="Employee Distribution")
 fig.show()
 
+🔍 Rendering Chart #2...
+⏱️ Chart #2 rendered in 1.71 seconds
+🌐 Chart #2 saved to static/chart_2_20250701_104133.html
+
+🔢 Chart #3 Code:
+import seaborn as sns
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud, STOPWORDS
+
+wordcloud = WordCloud(width = 800, height = 800, random_state=21, stopwords = STOPWORDS).generate(" ".join(df['emp_name']))
+plt.figure(figsize=(10, 8))
+plt.imshow(wordcloud, interpolation="bilinear")
+plt.axis("off")
+plt.title("Employee Names")
+plt.show()
+
 🔍 Rendering Chart #3...
-⏱️ Chart #3 rendered in 1.45 seconds
-🌐 Chart #3 saved to static/chart_3_20250701_095310.html
+❌ Error rendering chart #3: No module named 'wordcloud'
 
 --- Generating ML Model Suggestions ---
 
 🔮 Suggested Machine Learning Ideas:
 
-1. 🎯 Target: avg_present_days
-   🛠️ Features: ['emp_id']
-   🧠 Type: regression
-   📋 Reason: Predicting average present days based on employee ID
+1. 🎯 Target: emp_name
+   🛠️ Features: []
+   🧠 Type: classification
+   📋 Reason: Classify employee names based on some unknown categorical distinction.
 
 
 💾 ML suggestions saved to static/ml_suggestion.txt
 
-🤖 Automatically training model for: avg_present_days
+🤖 Automatically training model for: emp_name
 
-✅ Training ML model | Target: avg_present_days | Features: ['emp_id']
-
-✅ Model trained. RMSE: 0.45
-💾 Model saved to models\avg_present_days_model.pkl
-📚 Model registry updated.
+✅ Training ML model | Target: emp_name | Features: []
+⚠️ An error occurred during ML suggestion: No objects to concatenate
 
 🔒 Database connection closed.
 
@@ -293,22 +282,15 @@ fig.show()
 
 🧠 Generated SQL Query:
 
-SELECT 
-  e.emp_id, 
-  AVG(p.present_days) AS avg_present_days
-FROM 
-  employee_tbl e 
-  JOIN payroll_data p ON e.emp_id = p.emp_id 
-GROUP BY 
-  e.emp_id;
+SELECT emp_name FROM employee_tbl;
 
 📊 Query Result (first 5 rows):
- emp_id  avg_present_days
-   1001             24.75
-   1002             24.75
-   1003             24.25
-   1004             24.00
-   1005             26.00
+emp_name
+    Alan
+    Bina
+   Casey
+   Dolly
+  Edison
 
 💾 Query results saved to static/query_output.html
 
@@ -321,63 +303,59 @@ GROUP BY
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(10,6))
-sns.histplot(df['avg_present_days'], kde=True, bins=20)
-plt.title('Distribution of Average Present Days')
-plt.xlabel('Average Present Days')
-plt.ylabel('Frequency')
+plt.figure(figsize=(8,6))
+sns.countplot(x="emp_name", data=df)
+plt.title("Employee Count")
+plt.xlabel("Employee Name")
+plt.ylabel("Count")
 plt.show()
 
 🔍 Rendering Chart #1...
-⏱️ Chart #1 rendered in 13.44 seconds
-🖼️ Chart #1 saved to static/chart_1_20250701_095301.png
+⏱️ Chart #1 rendered in 2.75 seconds
+🖼️ Chart #1 saved to static/chart_1_20250701_104131.png
 
 🔢 Chart #2 Code:
-import seaborn as sns
-import matplotlib.pyplot as plt
-
-plt.figure(figsize=(10,6))
-sns.boxplot(y='avg_present_days', data=df)
-plt.title('Boxplot of Average Present Days')
-plt.ylabel('Average Present Days')
-plt.show()
-
-🔍 Rendering Chart #2...
-⏱️ Chart #2 rendered in 6.5 seconds
-🖼️ Chart #2 saved to static/chart_2_20250701_095308.png
-
-🔢 Chart #3 Code:
 import plotly.express as px
 
-fig = px.bar(df, x='emp_id', y='avg_present_days')
-fig.update_layout(title='Average Present Days by Employee',
-                  xaxis_title='Employee ID',
-                  yaxis_title='Average Present Days')
+fig = px.pie(names=df['emp_name'], values=[1]*len(df))
+fig.update_layout(title_text="Employee Distribution")
 fig.show()
 
+🔍 Rendering Chart #2...
+⏱️ Chart #2 rendered in 1.71 seconds
+🌐 Chart #2 saved to static/chart_2_20250701_104133.html
+
+🔢 Chart #3 Code:
+import seaborn as sns
+import matplotlib.pyplot as plt
+from wordcloud import WordCloud, STOPWORDS
+
+wordcloud = WordCloud(width = 800, height = 800, random_state=21, stopwords = STOPWORDS).generate(" ".join(df['emp_name']))
+plt.figure(figsize=(10, 8))
+plt.imshow(wordcloud, interpolation="bilinear")
+plt.axis("off")
+plt.title("Employee Names")
+plt.show()
+
 🔍 Rendering Chart #3...
-⏱️ Chart #3 rendered in 1.45 seconds
-🌐 Chart #3 saved to static/chart_3_20250701_095310.html
+❌ Error rendering chart #3: No module named 'wordcloud'
 
 --- Generating ML Model Suggestions ---
 
 🔮 Suggested Machine Learning Ideas:
 
-1. 🎯 Target: avg_present_days
-   🛠️ Features: ['emp_id']
-   🧠 Type: regression
-   📋 Reason: Predicting average present days based on employee ID
+1. 🎯 Target: emp_name
+   🛠️ Features: []
+   🧠 Type: classification
+   📋 Reason: Classify employee names based on some unknown categorical distinction.
 
 
 💾 ML suggestions saved to static/ml_suggestion.txt
 
-🤖 Automatically training model for: avg_present_days
+🤖 Automatically training model for: emp_name
 
-✅ Training ML model | Target: avg_present_days | Features: ['emp_id']
-
-✅ Model trained. RMSE: 0.45
-💾 Model saved to models\avg_present_days_model.pkl
-📚 Model registry updated.
+✅ Training ML model | Target: emp_name | Features: []
+⚠️ An error occurred during ML suggestion: No objects to concatenate
 
 🔒 Database connection closed.
 

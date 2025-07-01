@@ -207,17 +207,25 @@ def render_chart(code, df, chart_idx):
 # Main execution flow
 if __name__ == "__main__":
     if len(sys.argv) < 6:
-        log_print("❌ Not enough arguments passed from Flask.")
-        log_print("Usage: python sql-query-viz-ml-generator.py <host> <db> <user> <password> <question>")
-        sys.exit(1)
+        log_print("ℹ️ Using environment variables for DB config (CLI args not provided).")
+        host = os.getenv("DB_HOST")
+        db_name = os.getenv("DB_NAME")
+        user = os.getenv("DB_USER")
+        password = os.getenv("DB_PASSWORD")
+        question = input("❓ Enter your natural language question: ").strip()
 
-    host = sys.argv[1]
-    db_name = sys.argv[2]
-    user = sys.argv[3]
-    password = sys.argv[4]
-    question = sys.argv[5]
+        if not all([host, db_name, user, password, question]):
+            log_print("❌ Missing DB environment variables or question input.")
+            sys.exit(1)
+    else:
+        host = sys.argv[1]
+        db_name = sys.argv[2]
+        user = sys.argv[3]
+        password = sys.argv[4]
+        question = sys.argv[5]
 
-    conn = None # Initialize connection to None
+
+        conn = None # Initialize connection to None
     try:
         # Database connection
         # Using mysql+mysqlconnector for MySQL databases
