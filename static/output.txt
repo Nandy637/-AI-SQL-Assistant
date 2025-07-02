@@ -102,16 +102,23 @@
 
 🧠 Generated SQL Query:
 
-SELECT emp_name
-FROM employee_tbl;
+SELECT 
+  d.dept_name, 
+  SUM(p.salary) AS total_salary
+FROM 
+  employee_tbl e 
+  JOIN dept_tbl d ON e.dept_id = d.dept_id 
+  JOIN payroll_data p ON e.emp_id = p.emp_id
+GROUP BY 
+  d.dept_name
+ORDER BY 
+  total_salary DESC;
 
 📊 Query Result (first 5 rows):
-emp_name
-    Alan
-    Bina
-   Casey
-   Dolly
-  Edison
+dept_name  total_salary
+       HR      262181.0
+  Finance      186090.0
+       IT      116729.0
 
 💾 Query results saved to static/query_output.html
 
@@ -124,60 +131,52 @@ emp_name
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(10, 6))
-sns.countplot(x=df['emp_name'])
-plt.title('Employee Name Counts')
-plt.xlabel('Employee Name')
-plt.ylabel('Count')
-plt.show()
+try:
+    plt.figure(figsize=(10, 6))
+    sns.barplot(x="dept_name", y="total_salary", data=df)
+    plt.title("Total Salary by Department")
+    plt.xlabel("Department Name")
+    plt.ylabel("Total Salary")
+except Exception as e:
+    print(f"Error: {str(e)}")
 
 🔍 Rendering Chart #1...
-⏱️ Chart #1 rendered in 4.02 seconds
-🖼️ Chart #1 saved to static/chart_1_20250701_124433.png
+🖼️ Chart #1 saved and prepared for web display
+⏱️ Chart #1 processed in 0.67 seconds
 
 🔢 Chart #2 Code:
 import plotly.express as px
-from wordcloud import WordCloud
 
-wordcloud = WordCloud().generate(' '.join(df['emp_name'].values))
-fig = px.imshow([[wordcloud]], binary_string=True)
-fig.update_layout(title='Employee Name Word Cloud', width=800, height=600)
-fig.show()
+try:
+    fig = px.pie(df, names="dept_name", values="total_salary", title="Total Salary by Department")
+except Exception as e:
+    print(f"Error: {str(e)}")
 
 🔍 Rendering Chart #2...
-❌ Error rendering chart #2: No module named 'wordcloud'
+🌐 Chart #2 saved and prepared for web display
+⏱️ Chart #2 processed in 1.29 seconds
 
 🔢 Chart #3 Code:
 import seaborn as sns
 import matplotlib.pyplot as plt
 
-plt.figure(figsize=(10, 6))
-sns.histplot(df['emp_name'], kde=False)
-plt.title('Employee Name Distribution')
-plt.xlabel('Employee Name')
-plt.ylabel('Frequency')
-plt.show()
+try:
+    plt.figure(figsize=(10, 6))
+    sns.set(style="whitegrid")
+    plt.title("Total Salary by Department")
+    sns.set_context("paper")
+    sns.lineplot(x="dept_name", y="total_salary", data=df, marker="o", dashes=False)
+    plt.xlabel("Department Name")
+    plt.ylabel("Total Salary")
+except Exception as e:
+    print(f"Error: {str(e)}")
 
 🔍 Rendering Chart #3...
-⏱️ Chart #3 rendered in 3.4 seconds
-🖼️ Chart #3 saved to static/chart_3_20250701_124436.png
+🖼️ Chart #3 saved and prepared for web display
+⏱️ Chart #3 processed in 0.67 seconds
+💾 Chart results saved to static/chart_results.json
 
---- Generating ML Model Suggestions ---
-
-🔮 Suggested Machine Learning Ideas:
-
-1. 🎯 Target: emp_name
-   🛠️ Features: []
-   🧠 Type: regression
-   📋 Reason: Generate a numerical representation of employee names.
-
-
-💾 ML suggestions saved to static/ml_suggestion.txt
-
-🤖 Automatically training model for: emp_name
-
-✅ Training ML model | Target: emp_name | Features: []
-⚠️ An error occurred during ML suggestion: No objects to concatenate
+⚠️ Skipping ML model suggestion as the query returned no data or insufficient rows (<100).
 
 🔒 Database connection closed.
 

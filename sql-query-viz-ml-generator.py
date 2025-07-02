@@ -1,7 +1,10 @@
 import sys
 import json
 import os
+import uuid
 import requests
+import io  # Add this with your other imports at the top
+import base64  # Also ensure base64 is imported
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -18,11 +21,20 @@ from sklearn.metrics import accuracy_score, mean_squared_error
 import joblib
 sys.stdout.reconfigure(encoding='utf-8')
 
+class NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (np.integer, np.int64)):
+            return int(obj)
+        elif isinstance(obj, (np.floating, np.float64)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        return super(NumpyEncoder, self).default(obj)
 
 # Define output files
 LOG_FILE = "static/output.txt"
 QUERY_OUTPUT_FILE = "static/query_output.html"
-PLOT_OUTPUT_FILE = "static/plot_output.html"
+PLOT_OUTPUT_FILE = "static/plot_output.html" # This file is not directly used for individual charts anymore
 ML_SUGGESTION_FILE = "static/ml_suggestion.txt"
 
 # Ensure static directory exists before creating files
@@ -43,7 +55,6 @@ def log_print(*args, **kwargs):
     with open(LOG_FILE, "a", encoding="utf-8") as f:
         print(*args, file=f, **kwargs)
     print(*args, **kwargs)  # Also print to console
-
 
 
 # Groq API client
@@ -158,52 +169,88 @@ def train_and_save_model(df, target, features, model_type=None):
     except Exception as e:
         log_print(f"❌ Error during model training or saving: {e}")
 
-# Chart rendering function
-# [Previous imports and setup remain the same until chart rendering function]
-
 def render_chart(code, df, chart_idx):
     """
-    Executes Python code to render a chart and saves it to a file.
-    Supports Matplotlib/Seaborn (PNG) and Plotly (HTML).
+    Enhanced chart rendering function that returns both file paths and direct data
+    for web display, with improved error handling.
     """
     local_env = {"df": df, "pd": pd, "sns": sns, "plt": plt, "px": px}
+    result = {
+        "success": False,
+        "chart_idx": chart_idx,
+        "file_path": None,
+        "web_path": None,
+        "chart_data": None,
+        "chart_type": None,
+        "error": None
+    }
+
     try:
         start = time.time()
-        
-        # Remove fig.show() calls to prevent console output
-        code = code.replace("fig.show()", "")
+        code = code.strip()
+        code = code.replace("fig.show()", "").replace("plt.show()", "")
         
         exec(code, local_env)
-        end = time.time()
-        duration = round(end - start, 2)
-        log_print(f"⏱️ Chart #{chart_idx} rendered in {duration} seconds")
-
-        # Save Matplotlib/Seaborn charts
-        if "plt.show()" in code:
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"static/chart_{chart_idx}_{timestamp}.png"
-            plt.savefig(filename)
-            log_print(f"🖼️ Chart #{chart_idx} saved to {filename}")
-            plt.clf()
-            return filename
-
-        # Save Plotly charts
+        
+        # Handle Plotly charts
         fig = local_env.get("fig")
         if fig is not None:
             timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = f"static/chart_{chart_idx}_{timestamp}.html"
-            # Use full_html=False to minimize the HTML output
-            fig.write_html(filename, include_plotlyjs='cdn', full_html=False)
-            log_print(f"🌐 Chart #{chart_idx} saved to {filename}")
-            return filename
-        else:
-            log_print(f"⚠️ No figure found in chart code #{chart_idx}.")
-            return None
+            filename = f"chart_{chart_idx}_{timestamp}.html"
+            filepath = os.path.join("static", filename)
             
+            fig.write_html(filepath, include_plotlyjs='cdn', full_html=False)
+            
+            result.update({
+                "success": True,
+                "file_path": filepath,
+                "web_path": f"/static/{filename}",
+                "chart_data": fig.to_dict(),
+                "chart_type": "plotly"
+            })
+            log_print(f"🌐 Chart #{chart_idx} saved and prepared for web display")
+
+        # Handle Matplotlib/Seaborn charts
+        elif 'plt' in local_env and local_env['plt'].get_fignums():
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"chart_{chart_idx}_{timestamp}.png"
+            filepath = os.path.join("static", filename)
+            
+            # First save to file
+            plt.savefig(filepath)
+            
+            # Then create base64 version
+            img_buffer = io.BytesIO()
+            plt.savefig(img_buffer, format='png', bbox_inches='tight')
+            plt.close('all')
+            img_buffer.seek(0)
+            base64_data = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
+            
+            result.update({
+                "success": True,
+                "file_path": filepath,
+                "web_path": f"/static/{filename}",
+                "chart_data": base64_data,
+                "chart_type": "matplotlib"
+            })
+            log_print(f"🖼️ Chart #{chart_idx} saved and prepared for web display")
+
+        else:
+            error_msg = "No figure detected in chart code"
+            result["error"] = error_msg
+            log_print(f"⚠️ {error_msg}")
+
+        duration = round(time.time() - start, 2)
+        log_print(f"⏱️ Chart #{chart_idx} processed in {duration} seconds")
+
     except Exception as e:
-        log_print(f"❌ Error rendering chart #{chart_idx}: {e}")
-        return None
-# [Rest of the file remains the same]
+        error_msg = f"Error rendering chart #{chart_idx}: {str(e)}"
+        result["error"] = error_msg
+        log_print(f"❌ {error_msg}")
+        if 'plt' in local_env:
+            plt.close('all')
+
+    return result
 # Main execution flow
 if __name__ == "__main__":
     if len(sys.argv) < 6:
@@ -225,7 +272,7 @@ if __name__ == "__main__":
         question = sys.argv[5]
 
 
-        conn = None # Initialize connection to None
+    conn = None # Initialize connection to None
     try:
         # Database connection
         # Using mysql+mysqlconnector for MySQL databases
@@ -298,26 +345,29 @@ Only return the SQL code. Do not include any explanation or markdown outside the
             log_print(f"❌ Error executing SQL query: {e}")
 
         # Generate visualizations if DataFrame is not empty
+        # Generate visualizations if DataFrame is not empty
         if not df.empty:
             log_print("\n--- Generating Visualizations ---")
             viz_prompt = f"""
-You are a data visualization expert.
-Given this DataFrame (first 5 rows for schema reference):
-{df.head().to_string(index=False)}
+        You are a data visualization expert.
+        Given this DataFrame (first 5 rows for schema reference):
+        {df.head().to_string(index=False)}
 
-Suggest up to 3 different chart ideas using seaborn or plotly.
-Each chart should have its own complete Python code block.
-Assume 'df' is already defined.
+        Suggest up to 3 different chart ideas using seaborn or plotly.
+        Each chart should have its own complete Python code block.
+        Assume 'df' is already defined.
 
-IMPORTANT:
-1. DO NOT include fig.show() or plt.show() in the code
-2. For Plotly charts, assign the figure to a variable named 'fig'
-3. For Matplotlib/Seaborn charts, use plt but don't call show()
+        IMPORTANT:
+        1. DO NOT include fig.show() or plt.show() in the code
+        2. For Plotly charts, assign the figure to a variable named 'fig'
+        3. For Matplotlib/Seaborn charts, use plt but don't call show()
+        4. Ensure all DataFrame columns referenced actually exist in the data
+        5. Include proper error handling in the chart code
 
-Only return Python code blocks. Do not include any explanation or markdown outside the code blocks.
-"""
+        Only return Python code blocks. Do not include any explanation or markdown outside the code blocks.
+        """
             viz_response = client.chat.completions.create(
-                model="llama3-70b-8192", # Using the specified model
+                model="llama3-70b-8192",
                 messages=[{"role": "user", "content": viz_prompt}]
             )
 
@@ -328,21 +378,37 @@ Only return Python code blocks. Do not include any explanation or markdown outsi
                 log_print("⚠️ No chart code blocks found in the visualization suggestion.")
             else:
                 log_print(f"\n📈 {len(code_blocks)} Suggested Chart(s):\n")
+                chart_results = []
                 for i, viz_code in enumerate(code_blocks, 1):
-                    # Basic fixes for common LLM chart generation issues
                     viz_code = viz_code.strip()
-                    if "plt.show()" not in viz_code and "fig.show()" not in viz_code:
-                        if "plt." in viz_code:
-                            viz_code += "\nplt.show()"
-                        elif "px." in viz_code:
-                            viz_code += "\nfig.show()"
-
                     log_print(f"\n🔢 Chart #{i} Code:\n{viz_code}")
                     log_print(f"\n🔍 Rendering Chart #{i}...")
-                    render_chart(viz_code, df, i)
-        else:
-            log_print("\n⚠️ Skipping visualization generation as the query returned no data.")
-
+                    
+                
+                    
+                    try:
+                        result = render_chart(viz_code, df, i)
+                        chart_results.append(result)
+                        
+                        # Save chart results to a file
+                        with open(f"static/chart_{i}_result.json", "w") as f:
+                            json.dump(result, f, cls=NumpyEncoder)
+                        # Use custom encoder
+                    
+                    except Exception as e:
+                        log_print(f"❌ Error processing chart #{i}: {str(e)}")
+                        chart_results.append({
+                            "error": f"Error rendering chart: {str(e)}",
+                            "chart_idx": i
+                        })
+                     # ✅ Save all chart results after rendering
+                with open("static/chart_results.json", "w", encoding="utf-8") as f:
+                    json.dump(chart_results, f, indent=2, cls=NumpyEncoder)
+                log_print("💾 Chart results saved to static/chart_results.json")    
+                    
+                
+                # Return the results immediately after generation
+            
         # Optional ML Training if DataFrame is not empty and has enough rows
         if not df.empty and len(df) > 5: # Only suggest ML if we have enough data
             log_print("\n--- Generating ML Model Suggestions ---")
@@ -389,9 +455,9 @@ Format:
                     ml_suggestion_content = ""
                     for idx, idea in enumerate(ml_ideas, 1):
                         suggestion = (f"{idx}. 🎯 Target: {idea.get('target', 'N/A')}\n"
-                                    f"   🛠️ Features: {idea.get('features', 'N/A')}\n"
-                                    f"   🧠 Type: {idea.get('type', 'N/A')}\n"
-                                    f"   📋 Reason: {idea.get('reason', 'N/A')}\n")
+                                      f"  🛠️ Features: {idea.get('features', 'N/A')}\n"
+                                      f"  🧠 Type: {idea.get('type', 'N/A')}\n"
+                                      f"  📋 Reason: {idea.get('reason', 'N/A')}\n")
                         log_print(suggestion)
                         ml_suggestion_content += suggestion + "\n"
 

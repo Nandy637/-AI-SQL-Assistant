@@ -106,8 +106,8 @@ def get_output():
 
     # Check if the background thread is still alive
     is_currently_processing = processing_status["is_processing"] and \
-                            processing_status["thread"] and \
-                            processing_status["thread"].is_alive()
+                                processing_status["thread"] and \
+                                processing_status["thread"].is_alive()
 
     if processing_status["is_processing"] and \
        processing_status["thread"] and \
@@ -117,19 +117,19 @@ def get_output():
 
     return jsonify(output=output_content, processing=is_currently_processing)
 
-@app.route('/get_charts')
-def get_charts():
-    chart_files = []
-    # Get HTML charts (Plotly)
-    chart_files.extend(glob.glob("static/chart_*.html"))
-    # Get PNG charts (Matplotlib/Seaborn)
-    chart_files.extend(glob.glob("static/chart_*.png"))
-    
-    # Sort by creation time (newest first)
-    chart_files.sort(key=os.path.getmtime, reverse=True)
-    
-    # Return just the filenames
-    return jsonify(charts=[os.path.basename(f) for f in chart_files])
+@app.route('/get_chart_data')
+def get_chart_data():
+    try:
+        json_path = os.path.join("static", "chart_results.json")
+        if os.path.exists(json_path):
+            with open(json_path, "r", encoding="utf-8") as f:
+                charts = f.read()
+            return app.response_class(response=charts, mimetype='application/json')
+        else:
+            return jsonify([])  # Return empty if no charts
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
 if __name__ == "__main__":
     os.makedirs("static", exist_ok=True)
     app.run(debug=True, use_reloader=False)  # ← Prevent double-execution

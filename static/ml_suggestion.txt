@@ -1,5 +1,0 @@
-1. 🎯 Target: emp_name
-   🛠️ Features: []
-   🧠 Type: regression
-   📋 Reason: Generate a numerical representation of employee names.
-

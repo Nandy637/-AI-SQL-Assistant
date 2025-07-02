@@ -14,25 +14,25 @@
       "emp_name"
     ],
     "type": "regression",
-    "trained_on": "2025-06-30T16:19:58.279663"
+    "trained_on": "2025-07-01T17:21:40.379443"
   },
   "salary": {
     "model_file": "models\\salary_model.pkl",
     "features": [
-      "emp_id",
+      "emp_name",
       "month",
       "year"
     ],
     "type": "regression",
-    "trained_on": "2025-07-01T12:26:38.936838"
+    "trained_on": "2025-07-01T13:34:11.862302"
   },
   "avg_present_days": {
     "model_file": "models\\avg_present_days_model.pkl",
     "features": [
-      "emp_id"
+      "emp_name"
     ],
     "type": "regression",
-    "trained_on": "2025-07-01T09:53:11.531587"
+    "trained_on": "2025-07-01T15:31:49.439316"
   },
   "emp_name": {
     "model_file": "models\\emp_name_model.pkl",
